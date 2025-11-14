@@ -1,0 +1,32 @@
+[200~version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: shelftalk-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shelftalk
+
+  redis:
+    image: redis:7
+    container_name: shelftalk-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - shelftalk
+
+volumes:
+  postgres_data:
+
+networks:
+  shelftalk:
