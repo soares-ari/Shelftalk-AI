@@ -1,46 +1,31 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 /**
- * AuthModule
- * ----------
- * Este módulo define tudo o que pertence ao sistema de autenticação:
- * - Providers: AuthService
- * - Controllers: AuthController
- * - Imports: UsersModule e JwtModule
- *
- * Observação:
- * O JwtModule precisa ser configurado com a chave secreta (vinda do .env)
- * e com o tempo de expiração do token.
+ * Módulo de autenticação.
+ * Responsável por agrupar controller, service e dependências relacionadas.
  */
 @Module({
   imports: [
-    // Importa UsersModule para permitir consultar/criar usuários
-    UsersModule,
+    UsersModule, // Importa UsersService
 
-    // Configura JWT com chave secreta e validade
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'default_secret', // ⚠ deve ser definida no .env
-      signOptions: { expiresIn: '7d' }, // Token válido por 7 dias
+    // Registro assíncrono do JWT para ler a secret do .env
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '1h', // expiração padrão de tokens
+        },
+      }),
     }),
   ],
-
-  controllers: [
-    // Controller responsável por /auth/register e /auth/login
-    AuthController,
-  ],
-
-  providers: [
-    // Serviço principal de autenticação (hash, validação, login)
-    AuthService,
-  ],
-
-  exports: [
-    // Exporta AuthService caso outros módulos precisem usar login/validar usuário
-    AuthService,
-  ],
+  controllers: [AuthController],
+  providers: [AuthService],
 })
 export class AuthModule {}

@@ -8,12 +8,12 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
 // Tipos de retorno (excelente para documentação e clareza)
-interface RegisterResult {
+export interface RegisterResult {
   id: string;
   email: string;
 }
 
-interface LoginResult {
+export interface LoginResult {
   accessToken: string;
 }
 
