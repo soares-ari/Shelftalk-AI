@@ -4,12 +4,12 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
-// Tipos explícitos para deixar claro o que cada função retorna
+// Tipos de retorno (excelente para documentação e clareza)
 interface RegisterResult {
-  id: number;
+  id: string;
   email: string;
 }
 
@@ -20,36 +20,36 @@ interface LoginResult {
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService, // Serviço que lida com o banco e o User entity
-    private readonly jwtService: JwtService, // Responsável pela assinatura dos tokens
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
   ) {}
 
   /**
-   * register()
-   * -------------
-   * Registra um novo usuário:
-   * - verifica se email já existe
-   * - gera hash da senha
-   * - grava no banco
+   * Registra um novo usuário no sistema.
+   * - Gera hash seguro (bcrypt)
+   * - Salva no banco
+   * - Retorna apenas dados públicos (id/email)
    */
   async register(dto: {
     email: string;
     password: string;
   }): Promise<RegisterResult> {
+    // Verifica se já existe um usuário com o mesmo email
     const existing = await this.usersService.findByEmail(dto.email);
-
     if (existing) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException('Email already in use');
     }
 
     // Gera hash seguro da senha
-    const hashed = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password, 10);
 
+    // Cria o usuário no banco
     const user = await this.usersService.create({
       email: dto.email,
-      password: hashed,
+      passwordHash,
     });
 
+    // Retorna somente dados seguros (sem senha)
     return {
       id: user.id,
       email: user.email,
@@ -57,39 +57,29 @@ export class AuthService {
   }
 
   /**
-   * validateUser()
-   * --------------
-   * Função interna usada pelo login:
-   * - busca usuário por email
-   * - compara hash da senha
-   */
-  private async validateUser(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
-
-    if (!user) return null;
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) return null;
-
-    return user;
-  }
-
-  /**
-   * login()
-   * -------
-   * Gera o JWT caso o usuário seja válido.
+   * Realiza login.
+   * - Busca usuário
+   * - Compara senhas com bcrypt
+   * - Gera access token JWT
    */
   async login(dto: { email: string; password: string }): Promise<LoginResult> {
-    const user = await this.validateUser(dto.email, dto.password);
+    const user = await this.usersService.findByEmail(dto.email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Payload que irá dentro do token
+    // Compara a senha em texto puro com o hash armazenado
+    const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
+
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Payload do token JWT
     const payload = { sub: user.id, email: user.email };
 
-    // Geração do JWT usando o JwtService
+    // Gera token assinado
     const accessToken = await this.jwtService.signAsync(payload);
 
     return { accessToken };
