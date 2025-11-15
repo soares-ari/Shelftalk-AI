@@ -1,55 +1,46 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
-// Tipos de retorno (excelente para documentação e clareza)
+/**
+ * Tipo retornado no registro
+ */
 export interface RegisterResult {
   id: string;
   email: string;
 }
 
+/**
+ * Tipo retornado no login
+ */
 export interface LoginResult {
   accessToken: string;
 }
 
+/**
+ * Serviço responsável por registro + login.
+ */
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
-    private readonly jwtService: JwtService,
+    private readonly jwt: JwtService,
   ) {}
 
   /**
-   * Registra um novo usuário no sistema.
-   * - Gera hash seguro (bcrypt)
-   * - Salva no banco
-   * - Retorna apenas dados públicos (id/email)
+   * Registro de usuário
    */
   async register(dto: {
     email: string;
     password: string;
   }): Promise<RegisterResult> {
-    // Verifica se já existe um usuário com o mesmo email
-    const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) {
-      throw new ConflictException('Email already in use');
-    }
-
-    // Gera hash seguro da senha
+    // Gera hash seguro
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
     // Cria o usuário no banco
-    const user = await this.usersService.create({
-      email: dto.email,
-      passwordHash,
-    });
+    const user = await this.usersService.create(dto.email, passwordHash);
 
-    // Retorna somente dados seguros (sem senha)
     return {
       id: user.id,
       email: user.email,
@@ -57,10 +48,7 @@ export class AuthService {
   }
 
   /**
-   * Realiza login.
-   * - Busca usuário
-   * - Compara senhas com bcrypt
-   * - Gera access token JWT
+   * Login do usuário
    */
   async login(dto: { email: string; password: string }): Promise<LoginResult> {
     const user = await this.usersService.findByEmail(dto.email);
@@ -69,19 +57,23 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Compara a senha em texto puro com o hash armazenado
+    // Valida senha
     const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!passwordMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Payload do token JWT
-    const payload = { sub: user.id, email: user.email };
+    // Cria token JWT
+    const payload = {
+      sub: user.id,
+      email: user.email,
+    };
 
-    // Gera token assinado
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwt.signAsync(payload);
 
-    return { accessToken };
+    return {
+      accessToken,
+    };
   }
 }
