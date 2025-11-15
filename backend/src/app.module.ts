@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import appConfig from './config/app.config';
-import databaseConfig from './config/database.config';
-import redisConfig from './config/redis.config';
+import { DatabaseModule } from './config/database.module';
+import configuration from './config/configuration';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, redisConfig],
-      // sem validate por enquanto
+      load: [configuration],
     }),
+
+    DatabaseModule,
   ],
 })
 export class AppModule {}
