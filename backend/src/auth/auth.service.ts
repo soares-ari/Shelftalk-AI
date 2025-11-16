@@ -1,26 +1,21 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
-/**
- * Tipo retornado no registro
- */
 export interface RegisterResult {
   id: string;
   email: string;
 }
 
-/**
- * Tipo retornado no login
- */
 export interface LoginResult {
   accessToken: string;
 }
 
-/**
- * Serviço responsável por registro + login.
- */
 @Injectable()
 export class AuthService {
   constructor(
@@ -29,17 +24,24 @@ export class AuthService {
   ) {}
 
   /**
-   * Registro de usuário
+   * Registro de novo usuário.
+   * Lança 409 se e-mail já existir.
    */
   async register(dto: {
     email: string;
     password: string;
   }): Promise<RegisterResult> {
-    // Gera hash seguro
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    // Verifica se já existe
+    const existing = await this.usersService.findByEmail(dto.email);
+    if (existing) {
+      throw new ConflictException('Email already registered');
+    }
 
-    // Cria o usuário no banco
-    const user = await this.usersService.create(dto.email, passwordHash);
+    // Gera hash seguro
+    const hashed = await bcrypt.hash(dto.password, 10);
+
+    // Cria usuário
+    const user = await this.usersService.create(dto.email, hashed);
 
     return {
       id: user.id,
@@ -48,7 +50,7 @@ export class AuthService {
   }
 
   /**
-   * Login do usuário
+   * Login de usuário existente.
    */
   async login(dto: { email: string; password: string }): Promise<LoginResult> {
     const user = await this.usersService.findByEmail(dto.email);
@@ -57,23 +59,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Valida senha
-    const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
-
-    if (!passwordMatch) {
+    // Compara senha
+    const valid = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!valid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Cria token JWT
-    const payload = {
+    // Gera JWT
+    const token = await this.jwt.signAsync({
       sub: user.id,
       email: user.email,
-    };
+    });
 
-    const accessToken = await this.jwt.signAsync(payload);
-
-    return {
-      accessToken,
-    };
+    return { accessToken: token };
   }
 }
