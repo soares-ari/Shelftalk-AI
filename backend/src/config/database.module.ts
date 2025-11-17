@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 // ✅ Importação explícita das entities
 import { User } from '../users/user.entity';
 import { Product } from '../products/product.entity';
+import { Generation } from '../generations/generation.entity'; // 🔥 ADICIONADO
 
 /**
  * Interface descrevendo a configuração
@@ -52,10 +53,10 @@ interface PostgresConfig {
 
           /**
            * ✅ ENTITIES EXPLÍCITAS
-           * Muito mais seguro que glob patterns.
-           * Adicione novas entities aqui conforme criar.
+           * 🔥 Generation adicionada aqui
+           * Adicione novas entities conforme criar.
            */
-          entities: [User, Product],
+          entities: [User, Product, Generation],
 
           /**
            * ⚠️ Em ambiente DEV o synchronize=true é aceitável.

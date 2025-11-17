@@ -31,8 +31,14 @@ export class AiService {
     private readonly socialPostPipeline: SocialPostPipeline,
   ) {}
 
+  // ========================================
+  // MÉTODOS PÚBLICOS PARA CONTROLLERS
+  // (Com AuthUser para logs/auditoria)
+  // ========================================
+
   /**
    * Gera uma descrição longa "preview" (sem salvar em banco).
+   * Usado pelo AiController para testes rápidos.
    */
   async previewLongDescription(user: AuthUser, input: BaseProductInput) {
     this.logger.debug(`User ${user.id} solicitou preview de descrição longa`);
@@ -89,5 +95,109 @@ export class AiService {
       prompt: input,
       result: result.text,
     };
+  }
+
+  // ========================================
+  // MÉTODOS INTERNOS PARA OUTROS SERVICES
+  // (Sem AuthUser - usado pelo GenerationsService)
+  // ========================================
+
+  /**
+   * 🔥 NOVO: Gera título direto (sem AuthUser).
+   * Usado pelo GenerationsService para salvar no banco.
+   *
+   * @param name - Nome do produto
+   * @param description - Descrição base (opcional)
+   * @param maxLength - Limite de caracteres (padrão: 80)
+   * @returns string - Título gerado
+   */
+  async generateTitle(
+    name: string,
+    description?: string | null,
+    maxLength: number = 80,
+  ): Promise<string> {
+    this.logger.debug(`Gerando título para produto: ${name}`);
+
+    const result = await this.titlePipeline.run({
+      name,
+      description: description ?? undefined,
+      maxLength,
+    });
+
+    return result.text;
+  }
+
+  /**
+   * 🔥 NOVO: Gera descrição longa direto.
+   *
+   * @param name - Nome do produto
+   * @param description - Descrição base (opcional)
+   * @returns string - Descrição gerada
+   */
+  async generateLongDescription(
+    name: string,
+    description?: string | null,
+  ): Promise<string> {
+    this.logger.debug(`Gerando descrição longa para produto: ${name}`);
+
+    const result = await this.longDescriptionPipeline.run({
+      name,
+      description: description ?? undefined,
+    });
+
+    return result.text;
+  }
+
+  /**
+   * 🔥 NOVO: Gera tags direto.
+   *
+   * @param name - Nome do produto
+   * @param description - Descrição base (opcional)
+   * @param maxTags - Número máximo de tags (padrão: 10)
+   * @returns string - Tags separadas por vírgula
+   */
+  async generateTags(
+    name: string,
+    description?: string | null,
+    maxTags: number = 10,
+  ): Promise<string> {
+    this.logger.debug(`Gerando tags para produto: ${name}`);
+
+    const result = await this.tagsPipeline.run({
+      name,
+      description: description ?? undefined,
+      maxTags,
+    });
+
+    return result.text;
+  }
+
+  /**
+   * 🔥 NOVO: Gera post social direto.
+   *
+   * @param name - Nome do produto
+   * @param description - Descrição base (opcional)
+   * @param channel - Canal social (instagram, tiktok, etc)
+   * @param tone - Tom do texto (opcional)
+   * @returns string - Post gerado
+   */
+  async generateSocial(
+    name: string,
+    description?: string | null,
+    channel: 'instagram' | 'tiktok' | 'threads' | 'linkedin' = 'instagram',
+    tone?: 'casual' | 'premium' | 'jovem' | 'neutro',
+  ): Promise<string> {
+    this.logger.debug(
+      `Gerando post social para produto: ${name} no canal ${channel}`,
+    );
+
+    const result = await this.socialPostPipeline.run({
+      name,
+      description: description ?? undefined,
+      channel,
+      tone,
+    });
+
+    return result.text;
   }
 }

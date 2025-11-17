@@ -16,8 +16,13 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand",
+    "test:e2e:watch": "jest --config ./test/jest-e2e.json --watch --runInBand",
+    "test:e2e:cov": "jest --config ./test/jest-e2e.json --coverage --runInBand",
+    "test:e2e:auth": "jest --config ./test/jest-e2e.json auth.e2e-spec.ts --runInBand",
+    "test:e2e:products": "jest --config ./test/jest-e2e.json products.e2e-spec.ts --runInBand",
+    "test:e2e:generations": "jest --config ./test/jest-e2e.json generations.e2e-spec.ts --runInBand",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@langchain/core": "^1.0.5",
@@ -52,6 +57,7 @@
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
+    "dotenv": "^17.2.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

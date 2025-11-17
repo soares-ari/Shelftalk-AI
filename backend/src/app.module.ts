@@ -5,11 +5,11 @@ import { DatabaseModule } from './config/database.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
-import { OpenAIModule } from './openai/openai.module';
-import configuration from './config/configuration';
 import { AiModule } from './ai/ai.module';
-
 import { GenerationsModule } from './generations/generations.module';
+import configuration from './config/configuration';
+
+// 🔥 REMOVIDO: OpenAIModule (não é mais necessário com LangChain)
 
 @Module({
   imports: [
@@ -19,17 +19,10 @@ import { GenerationsModule } from './generations/generations.module';
     }),
 
     DatabaseModule,
-
     UsersModule,
-
     AuthModule,
-
     ProductsModule,
-
     AiModule,
-
-    OpenAIModule,
-
     GenerationsModule,
   ],
 })
