@@ -4,7 +4,9 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { Generation } from 'src/generations/generation.entity';
 
 /**
  * Product
@@ -58,4 +60,7 @@ export class Product {
    */
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => Generation, (g) => g.product)
+  generations: Generation[];
 }

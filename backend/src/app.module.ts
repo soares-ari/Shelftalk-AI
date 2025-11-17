@@ -9,6 +9,8 @@ import { OpenAIModule } from './openai/openai.module';
 import configuration from './config/configuration';
 import { AiModule } from './ai/ai.module';
 
+import { GenerationsModule } from './generations/generations.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -27,6 +29,8 @@ import { AiModule } from './ai/ai.module';
     AiModule,
 
     OpenAIModule,
+
+    GenerationsModule,
   ],
 })
 export class AppModule {}
