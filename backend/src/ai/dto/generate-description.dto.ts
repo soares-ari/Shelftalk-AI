@@ -1,12 +1,9 @@
-// src/ai/dto/generate-description.dto.ts
+// backend/src/ai/dto/generate-description.dto.ts
 
 import { IsString, IsOptional } from 'class-validator';
 
 /**
- * GenerateDescriptionDto
- *
- * Define o formato dos dados que o frontend envia
- * quando quer gerar uma descrição de produto com IA.
+ * DTO para geração de descrição longa de produto.
  */
 export class GenerateDescriptionDto {
   @IsString()
