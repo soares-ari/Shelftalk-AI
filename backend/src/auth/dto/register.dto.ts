@@ -10,6 +10,13 @@ import { IsEmail, IsString, MinLength } from 'class-validator';
  */
 export class RegisterDto {
   /**
+   * Nome do usuário.
+   * Campo obrigatório no cadastro.
+   */
+  @IsString()
+  name: string;
+
+  /**
    * Email do usuário, validado automaticamente pelo class-validator.
    * Obrigatório e deve seguir formato de email válido.
    */

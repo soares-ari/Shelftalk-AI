@@ -16,10 +16,19 @@ export class UsersService {
 
   /**
    * Cria um novo usuário no banco.
-   * Apenas dois argumentos são necessários: email e passwordHash.
+   * Agora inclui o campo `name`.
    */
-  async create(email: string, passwordHash: string): Promise<User> {
-    const user = this.usersRepository.create({ email, passwordHash });
+  async create(
+    name: string,
+    email: string,
+    passwordHash: string,
+  ): Promise<User> {
+    const user = this.usersRepository.create({
+      name,
+      email,
+      passwordHash,
+    });
+
     return this.usersRepository.save(user);
   }
 }

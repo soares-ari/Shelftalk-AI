@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 export interface RegisterResult {
   id: string;
   email: string;
+  name: string;
 }
 
 export interface LoginResult {
@@ -28,6 +29,7 @@ export class AuthService {
    * Lança 409 se e-mail já existir.
    */
   async register(dto: {
+    name: string;
     email: string;
     password: string;
   }): Promise<RegisterResult> {
@@ -40,12 +42,13 @@ export class AuthService {
     // Gera hash seguro
     const hashed = await bcrypt.hash(dto.password, 10);
 
-    // Cria usuário
-    const user = await this.usersService.create(dto.email, hashed);
+    // Cria usuário com nome
+    const user = await this.usersService.create(dto.name, dto.email, hashed);
 
     return {
       id: user.id,
       email: user.email,
+      name: user.name,
     };
   }
 

@@ -11,6 +11,9 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column()
+  name: string; // <-- NOVO CAMPO
+
   @Column({ unique: true })
   email: string;
 
