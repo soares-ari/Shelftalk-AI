@@ -133,8 +133,12 @@ export class GenerationsService {
 
   /**
    * Busca uma geração específica
+   * ATUALIZADO: Inclui relação com product para verificar ownership
    */
   async findOne(id: string): Promise<Generation | null> {
-    return this.generationRepository.findOne({ where: { id } });
+    return this.generationRepository.findOne({
+      where: { id },
+      relations: ['product'],
+    });
   }
 }

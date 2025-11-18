@@ -1,4 +1,6 @@
 // src/components/layout/dashboard-shell.tsx
+"use client";
+
 import { ReactNode } from "react";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
