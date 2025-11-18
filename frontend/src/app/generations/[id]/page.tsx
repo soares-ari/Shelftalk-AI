@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { API_BASE_URL } from "@/lib/config";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { GenerationTabs } from "@/components/generations/generation-tabs";
 
@@ -10,10 +9,11 @@ async function getGeneration(id: string) {
 
   if (!token) redirect("/login");
 
-  const res = await fetch(`${API_BASE_URL}/generations/${id}`, {
+  // Usar proxy interno em vez de chamar backend direto
+  const res = await fetch(`http://localhost:3000/api/generations/${id}`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Cookie: `accessToken=${token}`,
     },
     cache: "no-store",
   });
