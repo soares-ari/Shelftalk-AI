@@ -13,11 +13,13 @@ export class GenerationsController {
 
   @Post('generate-all')
   generate(@CurrentUser() user: AuthUser, @Body() dto: GenerateAllDto) {
-    return this.service.generateAll(user.id, dto);
+    // CORRIGIDO: Passa dto.productId (string) e user.id (string) na ordem correta
+    return this.service.generateAll(dto.productId, user.id);
   }
 
   @Get('product/:id')
   findByProduct(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.service.findByProduct(user.id, id);
+    // CORRIGIDO: Usa método correto findAllByProduct e remove user.id (desnecessário)
+    return this.service.findAllByProduct(id);
   }
 }

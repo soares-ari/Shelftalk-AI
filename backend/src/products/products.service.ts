@@ -1,139 +1,78 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+// backend/src/products/products.service.ts
+
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
 import { Product } from './product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductResponseDto } from './dto/product-response.dto';
 
 /**
- * ProductsService
- *
- * Contém toda a lógica de negócio relacionada a produtos.
- * Mantém isolamento de dados: um usuário só pode manipular os seus próprios produtos.
+ * Service responsável pela lógica de negócio de produtos
  */
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
-    private readonly productsRepo: Repository<Product>,
+    private readonly productRepository: Repository<Product>,
   ) {}
 
   /**
-   * Criação de produto.
-   * Mapeamento seguro: evita quaisquer campos dinâmicos que possam gerar tipos incorretos.
+   * Criar novo produto
+   *
+   * ATUALIZADO: Agora aceita imageUrl
    */
   async create(
-    ownerId: string,
-    dto: CreateProductDto,
-  ): Promise<ProductResponseDto> {
-    const product = this.productsRepo.create({
-      name: dto.name,
-      description: dto.description ?? null,
-      ownerId,
+    data: CreateProductDto & { ownerId: string; imageUrl?: string | null },
+  ): Promise<Product> {
+    const product = this.productRepository.create({
+      name: data.name,
+      description: data.description || null,
+      imageUrl: data.imageUrl || null,
+      ownerId: data.ownerId,
     });
 
-    const saved = await this.productsRepo.save(product);
-    return this.toResponseDto(saved);
+    return this.productRepository.save(product);
   }
 
   /**
-   * Lista todos os produtos do usuário autenticado.
+   * Buscar todos os produtos de um usuário
    */
-  async findAllForUser(ownerId: string): Promise<ProductResponseDto[]> {
-    const products = await this.productsRepo.find({
+  async findAllByOwner(ownerId: string): Promise<Product[]> {
+    return this.productRepository.find({
       where: { ownerId },
       order: { createdAt: 'DESC' },
     });
-
-    return products.map((p) => this.toResponseDto(p));
   }
 
   /**
-   * Retorna um produto do usuário.
-   * Valida existência e propriedade.
+   * Buscar produto por ID
    */
-  async findOne(ownerId: string, id: string): Promise<ProductResponseDto> {
-    const product = await this.productsRepo.findOne({ where: { id } });
-
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
-    if (product.ownerId !== ownerId) {
-      throw new ForbiddenException('You do not own this product');
-    }
-
-    return this.toResponseDto(product);
+  async findOne(id: string): Promise<Product | null> {
+    return this.productRepository.findOne({ where: { id } });
   }
 
   /**
-   * Atualiza apenas os campos permitidos.
-   * Sem Object.assign → evita problemas do TypeORM com tipos inválidos.
+   * Atualizar produto
+   *
+   * ATUALIZADO: Permite atualizar imageUrl
    */
   async update(
-    ownerId: string,
     id: string,
-    dto: UpdateProductDto,
-  ): Promise<ProductResponseDto> {
-    const product = await this.productsRepo.findOne({ where: { id } });
-
-    if (!product) {
-      throw new NotFoundException('Product not found');
+    updateProductDto: UpdateProductDto & { imageUrl?: string },
+  ): Promise<Product> {
+    await this.productRepository.update(id, updateProductDto);
+    const updated = await this.findOne(id);
+    if (!updated) {
+      throw new Error('Produto não encontrado após atualização');
     }
-
-    if (product.ownerId !== ownerId) {
-      throw new ForbiddenException('You do not own this product');
-    }
-
-    // Atualização segura: apenas campos explicitamente declarados
-    if (dto.name !== undefined) {
-      product.name = dto.name;
-    }
-
-    if (dto.description !== undefined) {
-      product.description = dto.description ?? null;
-    }
-
-    const updated = await this.productsRepo.save(product);
-    return this.toResponseDto(updated);
+    return updated;
   }
 
   /**
-   * Remove um produto.
-   * Verifica existência e propriedade.
+   * Deletar produto
    */
-  async remove(ownerId: string, id: string): Promise<void> {
-    const product = await this.productsRepo.findOne({ where: { id } });
-
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
-    if (product.ownerId !== ownerId) {
-      throw new ForbiddenException('You do not own this product');
-    }
-
-    await this.productsRepo.remove(product);
-  }
-
-  /**
-   * Converte entidade na resposta pública padrão.
-   * Garante estabilidade da API e evita vazamento de dados internos.
-   */
-  private toResponseDto(product: Product): ProductResponseDto {
-    return {
-      id: product.id,
-      name: product.name,
-      description: product.description ?? null,
-      ownerId: product.ownerId,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
-    };
+  async remove(id: string): Promise<void> {
+    await this.productRepository.delete(id);
   }
 }

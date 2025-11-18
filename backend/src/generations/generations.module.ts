@@ -4,12 +4,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GenerationsService } from './generations.service';
 import { GenerationsController } from './generations.controller';
 
-import { Product } from '../products/product.entity';
 import { Generation } from './generation.entity';
 import { AiModule } from '../ai/ai.module';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Generation, Product]), AiModule],
+  imports: [TypeOrmModule.forFeature([Generation]), AiModule, ProductsModule],
   providers: [GenerationsService],
   controllers: [GenerationsController],
 })

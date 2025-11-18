@@ -1,6 +1,10 @@
+// backend/src/main.ts
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
   // Logs úteis para debug do ambiente de desenvolvimento
@@ -16,8 +20,8 @@ async function bootstrap() {
   console.log('   PORT:', process.env.PORT);
   console.log('================================\n');
 
-  // Cria a aplicação NestJS com logs verbosos
-  const app = await NestFactory.create(AppModule, {
+  // Cria a aplicação NestJS com suporte a Express completo
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
@@ -30,6 +34,14 @@ async function bootstrap() {
     }),
   );
 
+  // Servir arquivos estáticos (imagens de produtos)
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
+
+  // Habilita CORS
+  app.enableCors();
+
   // Define porta com fallback para 3000
   const port = process.env.PORT ?? 3000;
   console.log(`🚀 Tentando subir na porta: ${port}\n`);
@@ -38,12 +50,13 @@ async function bootstrap() {
 
   console.log(`\n✅ Application is running on: http://localhost:${port}`);
   console.log(
-    `📝 Swagger docs (se configurado): http://localhost:${port}/api/docs\n`,
+    `📝 Swagger docs (se configurado): http://localhost:${port}/api/docs`,
   );
+  console.log(`📁 Static files: http://localhost:${port}/uploads/\n`);
 }
 
 // Tratamento de erros na inicialização
-bootstrap().catch((error) => {
+bootstrap().catch((error: Error) => {
   console.error('\n❌ ===== ERRO AO INICIAR =====');
   console.error('Mensagem:', error.message);
   console.error('Stack:', error.stack);

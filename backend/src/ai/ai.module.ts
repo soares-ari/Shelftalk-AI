@@ -7,6 +7,7 @@ import { LongDescriptionPipeline } from './pipelines/long-description.pipeline';
 import { TitlePipeline } from './pipelines/title.pipeline';
 import { TagsPipeline } from './pipelines/tags.pipeline';
 import { SocialPostPipeline } from './pipelines/social-post.pipeline';
+import { VisionAnalysisPipeline } from './pipelines/vision-analysis.pipeline';
 
 @Module({
   imports: [],
@@ -17,6 +18,7 @@ import { SocialPostPipeline } from './pipelines/social-post.pipeline';
     TitlePipeline,
     TagsPipeline,
     SocialPostPipeline,
+    VisionAnalysisPipeline,
   ],
   exports: [AiService],
 })

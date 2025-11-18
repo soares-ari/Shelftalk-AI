@@ -6,18 +6,20 @@ import { LongDescriptionPipeline } from './pipelines/long-description.pipeline';
 import { TitlePipeline } from './pipelines/title.pipeline';
 import { TagsPipeline } from './pipelines/tags.pipeline';
 import { SocialPostPipeline } from './pipelines/social-post.pipeline';
+import { VisionAnalysisPipeline } from './pipelines/vision-analysis.pipeline';
 import type {
   BaseProductInput,
   TitleInput,
   TagsInput,
   SocialPostInput,
 } from './pipelines/ai-pipeline.types';
+import * as path from 'path';
 
 /**
  * AiService
  *
  * Camada de orquestração que expõe métodos de alto nível
- * para o resto da aplicação (controllers, etc.).
+ * para o resto da aplicação (controllers, services).
  * Cada método delega para uma pipeline especializada.
  */
 @Injectable()
@@ -29,7 +31,45 @@ export class AiService {
     private readonly titlePipeline: TitlePipeline,
     private readonly tagsPipeline: TagsPipeline,
     private readonly socialPostPipeline: SocialPostPipeline,
+    private readonly visionPipeline: VisionAnalysisPipeline,
   ) {}
+
+  // ========================================
+  // MÉTODO AUXILIAR PRIVADO
+  // ========================================
+
+  /**
+   * Enriquece descrição com análise visual se imageUrl estiver presente
+   */
+  private async enrichWithVisionAnalysis(
+    description: string | null | undefined,
+    imageUrl: string | null | undefined,
+  ): Promise<string> {
+    let enrichedDescription = description || '';
+
+    if (imageUrl) {
+      try {
+        const imagePath = path.join(process.cwd(), imageUrl);
+        this.logger.debug(`Analisando imagem: ${imagePath}`);
+
+        const visionAnalysis =
+          await this.visionPipeline.analyzeImage(imagePath);
+        const visionContext =
+          this.visionPipeline.formatAnalysisForPrompt(visionAnalysis);
+
+        enrichedDescription = `${description || ''}\n\nAnálise visual:\n${visionContext}`;
+        this.logger.debug('Contexto enriquecido com análise visual');
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Erro desconhecido';
+        this.logger.warn(
+          `Falha ao analisar imagem, continuando sem visão: ${errorMessage}`,
+        );
+      }
+    }
+
+    return enrichedDescription;
+  }
 
   // ========================================
   // MÉTODOS PÚBLICOS PARA CONTROLLERS
@@ -103,24 +143,26 @@ export class AiService {
   // ========================================
 
   /**
-   * 🔥 NOVO: Gera título direto (sem AuthUser).
+   * Gera título direto (sem AuthUser).
    * Usado pelo GenerationsService para salvar no banco.
-   *
-   * @param name - Nome do produto
-   * @param description - Descrição base (opcional)
-   * @param maxLength - Limite de caracteres (padrão: 80)
-   * @returns string - Título gerado
+   * Suporta análise de imagem se imageUrl fornecida.
    */
   async generateTitle(
     name: string,
     description?: string | null,
     maxLength: number = 80,
+    imageUrl?: string | null,
   ): Promise<string> {
     this.logger.debug(`Gerando título para produto: ${name}`);
 
+    const enrichedDescription = await this.enrichWithVisionAnalysis(
+      description,
+      imageUrl,
+    );
+
     const result = await this.titlePipeline.run({
       name,
-      description: description ?? undefined,
+      description: enrichedDescription,
       maxLength,
     });
 
@@ -128,44 +170,49 @@ export class AiService {
   }
 
   /**
-   * 🔥 NOVO: Gera descrição longa direto.
-   *
-   * @param name - Nome do produto
-   * @param description - Descrição base (opcional)
-   * @returns string - Descrição gerada
+   * Gera descrição longa.
+   * Suporta análise de imagem se imageUrl fornecida.
    */
   async generateLongDescription(
     name: string,
     description?: string | null,
+    imageUrl?: string | null,
   ): Promise<string> {
     this.logger.debug(`Gerando descrição longa para produto: ${name}`);
 
+    const enrichedDescription = await this.enrichWithVisionAnalysis(
+      description,
+      imageUrl,
+    );
+
     const result = await this.longDescriptionPipeline.run({
       name,
-      description: description ?? undefined,
+      description: enrichedDescription,
     });
 
     return result.text;
   }
 
   /**
-   * 🔥 NOVO: Gera tags direto.
-   *
-   * @param name - Nome do produto
-   * @param description - Descrição base (opcional)
-   * @param maxTags - Número máximo de tags (padrão: 10)
-   * @returns string - Tags separadas por vírgula
+   * Gera tags separadas por vírgula.
+   * Suporta análise de imagem se imageUrl fornecida.
    */
   async generateTags(
     name: string,
     description?: string | null,
+    imageUrl?: string | null,
     maxTags: number = 10,
   ): Promise<string> {
     this.logger.debug(`Gerando tags para produto: ${name}`);
 
+    const enrichedDescription = await this.enrichWithVisionAnalysis(
+      description,
+      imageUrl,
+    );
+
     const result = await this.tagsPipeline.run({
       name,
-      description: description ?? undefined,
+      description: enrichedDescription,
       maxTags,
     });
 
@@ -173,27 +220,28 @@ export class AiService {
   }
 
   /**
-   * 🔥 NOVO: Gera post social direto.
-   *
-   * @param name - Nome do produto
-   * @param description - Descrição base (opcional)
-   * @param channel - Canal social (instagram, tiktok, etc)
-   * @param tone - Tom do texto (opcional)
-   * @returns string - Post gerado
+   * Gera post para redes sociais.
+   * Suporta análise de imagem se imageUrl fornecida.
    */
   async generateSocial(
     name: string,
     description?: string | null,
-    channel: 'instagram' | 'tiktok' | 'threads' | 'linkedin' = 'instagram',
+    channel: 'instagram' | 'tiktok' | 'facebook' | 'pinterest' = 'instagram',
+    imageUrl?: string | null,
     tone?: 'casual' | 'premium' | 'jovem' | 'neutro',
   ): Promise<string> {
     this.logger.debug(
       `Gerando post social para produto: ${name} no canal ${channel}`,
     );
 
+    const enrichedDescription = await this.enrichWithVisionAnalysis(
+      description,
+      imageUrl,
+    );
+
     const result = await this.socialPostPipeline.run({
       name,
-      description: description ?? undefined,
+      description: enrichedDescription,
       channel,
       tone,
     });

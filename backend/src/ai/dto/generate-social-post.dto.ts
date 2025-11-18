@@ -1,21 +1,21 @@
 // backend/src/ai/dto/generate-social-post.dto.ts
 
-import { IsString, IsOptional, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
 
 /**
- * DTO para geração de posts sociais.
+ * DTO para gerar post social
  */
 export class GenerateSocialPostDto {
   @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   description?: string;
 
-  @IsString()
-  @IsIn(['instagram', 'tiktok', 'threads', 'linkedin'])
-  channel: 'instagram' | 'tiktok' | 'threads' | 'linkedin';
+  @IsIn(['instagram', 'tiktok', 'facebook', 'pinterest'])
+  channel: 'instagram' | 'tiktok' | 'facebook' | 'pinterest';
 
   @IsOptional()
   @IsIn(['casual', 'premium', 'jovem', 'neutro'])

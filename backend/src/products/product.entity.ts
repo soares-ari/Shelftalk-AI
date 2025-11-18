@@ -41,10 +41,16 @@ export class Product {
   description: string | null;
 
   /**
+   * URL/caminho da imagem do produto
+   * Armazena o caminho relativo da imagem no servidor
+   * Exemplo: "uploads/products/uuid-timestamp.jpg"
+   */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  imageUrl: string | null;
+
+  /**
    * ID do usuário dono do produto.
    * FUTURO: será chave estrangeira para Users.
-   *
-   * ✅ CORREÇÃO: Tipo explícito 'uuid'
    */
   @Column({ type: 'uuid' })
   ownerId: string;

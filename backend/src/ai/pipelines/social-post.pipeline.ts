@@ -9,6 +9,7 @@ import { SocialPostInput, GenerationResult } from './ai-pipeline.types';
  * SocialPostPipeline
  *
  * Gera uma legenda / copy para redes sociais com base no produto.
+ * Suporta: Instagram, TikTok, Facebook e Pinterest
  */
 @Injectable()
 export class SocialPostPipeline {
@@ -27,14 +28,38 @@ export class SocialPostPipeline {
 
     const tone = input.tone ?? 'neutro';
 
+    // Adapta estilo por canal
+    let styleGuide = '';
+    switch (input.channel) {
+      case 'instagram':
+        styleGuide =
+          'Formato Instagram: visual, use emojis estrategicamente, inclua 3-5 hashtags relevantes ao final. Tom aspiracional e inspirador.';
+        break;
+      case 'tiktok':
+        styleGuide =
+          'Formato TikTok: dinâmico, jovem, descontraído. Call-to-action forte. Use linguagem atual e referências de trends quando aplicável.';
+        break;
+      case 'facebook':
+        styleGuide =
+          'Formato Facebook: conversacional, storytelling, foque em engajamento. Público mais amplo (25-55 anos). Texto pode ser mais longo e detalhado.';
+        break;
+      case 'pinterest':
+        styleGuide =
+          'Formato Pinterest: descritivo e focado em inspiração e descoberta. Destaque usos, benefícios visuais e ideias de aplicação do produto.';
+        break;
+      default:
+        styleGuide = 'Tom neutro e profissional.';
+    }
+
     const prompt = ChatPromptTemplate.fromMessages([
       [
         'system',
         [
-          'Você é um social media que cria legendas para redes sociais em português do Brasil.',
-          'Adapte o texto para o canal informado (ex: Instagram, TikTok, etc.).',
-          'Use um tom coerente com a marca: {tone}.',
-          'Você pode usar emojis com moderação, mas evite exageros.',
+          'Você é um social media especializado em criar legendas para e-commerce em português do Brasil.',
+          'Adapte o texto para o canal e público-alvo específico.',
+          `Use um tom coerente com a marca: ${tone}.`,
+          styleGuide,
+          'Você pode usar emojis com moderação estratégica.',
         ].join(' '),
       ],
       [
@@ -44,7 +69,7 @@ export class SocialPostPipeline {
           'Nome do produto: {name}',
           'Descrição base (se houver): {description}',
           '',
-          'Crie uma legenda envolvente que incentive o clique ou a compra.',
+          'Crie uma legenda envolvente que incentive o clique, compartilhamento ou compra.',
         ].join('\n'),
       ],
     ]);

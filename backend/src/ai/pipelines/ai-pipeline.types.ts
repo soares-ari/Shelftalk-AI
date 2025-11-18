@@ -47,6 +47,6 @@ export type SocialChannel = 'instagram' | 'tiktok' | 'threads' | 'linkedin';
  * Entrada para geração de post social.
  */
 export interface SocialPostInput extends BaseProductInput {
-  channel: SocialChannel;
+  channel: 'instagram' | 'tiktok' | 'facebook' | 'pinterest';
   tone?: 'casual' | 'premium' | 'jovem' | 'neutro';
 }

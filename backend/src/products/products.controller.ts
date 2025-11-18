@@ -1,81 +1,160 @@
+// backend/src/products/products.controller.ts
+
 import {
   Controller,
   Get,
   Post,
-  Patch,
-  Delete,
-  Param,
   Body,
+  Patch,
+  Param,
+  Delete,
   UseGuards,
-  HttpCode,
-  HttpStatus,
+  Request,
+  NotFoundException,
+  ForbiddenException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import type { AuthUser } from '../auth/auth.types'; // ← IMPORT TYPE
-
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { multerConfig } from '../config/multer.config';
 
 /**
- * Controller responsável por expor as rotas HTTP do módulo de produtos.
- * Todas as rotas são protegidas por JWT, garantindo que apenas o usuário
- * autenticado consiga manipular seus próprios produtos.
+ * Interface para Request com user autenticado
+ */
+interface AuthenticatedRequest extends Request {
+  user: {
+    userId: string;
+    email: string;
+  };
+}
+
+/**
+ * Controller de produtos
  */
 @Controller('products')
-@UseGuards(JwtAuthGuard) // todas as rotas exigem token JWT
+@UseGuards(JwtAuthGuard)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   /**
-   * POST /products
-   * Cria um novo produto associado ao usuário autenticado.
+   * Criar produto com upload opcional de imagem
+   *
+   * Aceita multipart/form-data com campo 'image'
    */
   @Post()
-  create(@CurrentUser() user: AuthUser, @Body() dto: CreateProductDto) {
-    return this.productsService.create(user.id, dto);
+  @UseInterceptors(FileInterceptor('image', multerConfig))
+  async create(
+    @Body() createProductDto: CreateProductDto,
+    @Request() req: AuthenticatedRequest,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const userId = req.user.userId;
+
+    // Caminho relativo da imagem (se houver)
+    const imageUrl = file ? `uploads/products/${file.filename}` : null;
+
+    const product = await this.productsService.create({
+      ...createProductDto,
+      imageUrl,
+      ownerId: userId,
+    });
+
+    return product;
   }
 
   /**
-   * GET /products
-   * Lista todos os produtos do usuário autenticado.
+   * Listar todos os produtos do usuário autenticado
    */
   @Get()
-  findAll(@CurrentUser() user: AuthUser) {
-    return this.productsService.findAllForUser(user.id);
+  async findAll(@Request() req: AuthenticatedRequest) {
+    const userId = req.user.userId;
+    return this.productsService.findAllByOwner(userId);
   }
 
   /**
-   * GET /products/:id
-   * Retorna um produto específico do usuário autenticado.
+   * Buscar produto específico
    */
   @Get(':id')
-  findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.productsService.findOne(user.id, id);
+  async findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const userId = req.user.userId;
+    const product = await this.productsService.findOne(id);
+
+    if (!product) {
+      throw new NotFoundException('Produto não encontrado');
+    }
+
+    if (product.ownerId !== userId) {
+      throw new ForbiddenException('Você não tem acesso a este produto');
+    }
+
+    return product;
   }
 
   /**
-   * PATCH /products/:id
-   * Atualiza parcialmente um produto do usuário.
+   * Atualizar produto com upload opcional de nova imagem
+   *
+   * Permite atualizar imagem do produto
    */
   @Patch(':id')
-  update(
-    @CurrentUser() user: AuthUser,
+  @UseInterceptors(FileInterceptor('image', multerConfig))
+  async update(
     @Param('id') id: string,
-    @Body() dto: UpdateProductDto,
+    @Body() updateProductDto: UpdateProductDto,
+    @Request() req: AuthenticatedRequest,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.productsService.update(user.id, id, dto);
+    const userId = req.user.userId;
+    const product = await this.productsService.findOne(id);
+
+    if (!product) {
+      throw new NotFoundException('Produto não encontrado');
+    }
+
+    if (product.ownerId !== userId) {
+      throw new ForbiddenException(
+        'Você não tem permissão para atualizar este produto',
+      );
+    }
+
+    // Atualizar imageUrl se houver novo upload
+    const updateData: UpdateProductDto & { imageUrl?: string } = {
+      ...updateProductDto,
+    };
+
+    if (file) {
+      updateData.imageUrl = `uploads/products/${file.filename}`;
+
+      // TODO: Deletar imagem antiga se existir
+      // Implementar limpeza de arquivos órfãos depois
+    }
+
+    return this.productsService.update(id, updateData);
   }
 
   /**
-   * DELETE /products/:id
-   * Remove um produto do usuário autenticado.
+   * Deletar produto
    */
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.productsService.remove(user.id, id);
+  async remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const userId = req.user.userId;
+    const product = await this.productsService.findOne(id);
+
+    if (!product) {
+      throw new NotFoundException('Produto não encontrado');
+    }
+
+    if (product.ownerId !== userId) {
+      throw new ForbiddenException(
+        'Você não tem permissão para deletar este produto',
+      );
+    }
+
+    await this.productsService.remove(id);
+
+    return { message: 'Produto deletado com sucesso' };
   }
 }

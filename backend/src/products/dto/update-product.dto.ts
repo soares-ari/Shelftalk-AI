@@ -1,15 +1,22 @@
-import { IsString, IsOptional } from 'class-validator';
+// backend/src/products/dto/update-product.dto.ts
+
+import { IsOptional, IsString } from 'class-validator';
+import { CreateProductDto } from './create-product.dto';
 
 /**
- * DTO para atualização parcial de produtos.
- * Pode ser usado em PATCH /products/:id.
+ * DTO para atualização de produto
+ * Todos os campos são opcionais (herda de CreateProductDto)
  */
-export class UpdateProductDto {
-  @IsOptional()
+export class UpdateProductDto implements Partial<CreateProductDto> {
   @IsString()
+  @IsOptional()
   name?: string;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
 }
