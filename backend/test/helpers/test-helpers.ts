@@ -3,6 +3,8 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { Server } from 'http';
+import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Interface para representar um usuário de teste
@@ -21,6 +23,7 @@ export interface TestProduct {
   id: string;
   name: string;
   description: string | null;
+  imageUrl?: string | null; // ✅ ADICIONADO
   ownerId: string;
   createdAt: string;
   updatedAt: string;
@@ -28,14 +31,17 @@ export interface TestProduct {
 
 /**
  * Interface para representar uma geração de teste
+ * ✅ ATUALIZADA para refletir schema atual com 4 canais sociais
  */
 export interface TestGeneration {
   id: string;
   title: string;
   longDescription: string;
   tags: string;
-  socialText: string;
-  rawPrompt: Record<string, unknown>;
+  socialInstagram: string; // ✅ ADICIONADO
+  socialTikTok: string; // ✅ ADICIONADO
+  socialFacebook: string; // ✅ ADICIONADO
+  socialPinterest: string; // ✅ ADICIONADO
   createdAt: string;
 }
 
@@ -122,27 +128,56 @@ export async function createAuthenticatedUser(
 }
 
 /**
- * Cria um produto de teste
+ * ✅ ATUALIZADO: Cria um produto de teste (com ou sem imagem)
  */
 export async function createTestProduct(
   app: INestApplication,
   token: string,
   name?: string,
   description?: string,
+  withImage: boolean = false, // ✅ NOVO parâmetro
 ): Promise<TestProduct> {
   const productName = name || `Produto Teste ${Date.now()}`;
   const productDescription = description || 'Descrição de teste para validação';
 
-  const response = await request(app.getHttpServer() as Server)
-    .post('/products')
-    .set('Authorization', `Bearer ${token}`)
-    .send({
-      name: productName,
-      description: productDescription,
-    })
-    .expect(201);
+  if (withImage) {
+    // Upload com imagem usando multipart/form-data
+    const testImagePath = path.join(__dirname, '../fixtures/test-product.jpg');
 
-  return response.body as TestProduct;
+    // Verifica se imagem de teste existe, senão usa um buffer fake
+    let imageBuffer: Buffer;
+    if (fs.existsSync(testImagePath)) {
+      imageBuffer = fs.readFileSync(testImagePath);
+    } else {
+      // Cria um buffer fake mínimo (1x1 pixel JPEG)
+      imageBuffer = Buffer.from([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+        0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
+      ]);
+    }
+
+    const response = await request(app.getHttpServer() as Server)
+      .post('/products')
+      .set('Authorization', `Bearer ${token}`)
+      .field('name', productName)
+      .field('description', productDescription)
+      .attach('image', imageBuffer, 'test-product.jpg')
+      .expect(201);
+
+    return response.body as TestProduct;
+  } else {
+    // Upload sem imagem (JSON)
+    const response = await request(app.getHttpServer() as Server)
+      .post('/products')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: productName,
+        description: productDescription,
+      })
+      .expect(201);
+
+    return response.body as TestProduct;
+  }
 }
 
 /**
@@ -153,7 +188,7 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Valida estrutura de uma geração completa
+ * ✅ ATUALIZADO: Valida estrutura de uma geração completa
  */
 export function expectValidGeneration(generation: TestGeneration): void {
   expect(generation).toBeDefined();
@@ -161,8 +196,13 @@ export function expectValidGeneration(generation: TestGeneration): void {
   expect(generation.title).toBeDefined();
   expect(generation.longDescription).toBeDefined();
   expect(generation.tags).toBeDefined();
-  expect(generation.socialText).toBeDefined();
-  expect(generation.rawPrompt).toBeDefined();
+
+  // ✅ Valida os 4 campos sociais
+  expect(generation.socialInstagram).toBeDefined();
+  expect(generation.socialTikTok).toBeDefined();
+  expect(generation.socialFacebook).toBeDefined();
+  expect(generation.socialPinterest).toBeDefined();
+
   expect(generation.createdAt).toBeDefined();
 
   // Validações de conteúdo
@@ -170,5 +210,10 @@ export function expectValidGeneration(generation: TestGeneration): void {
   expect(generation.title.length).toBeGreaterThan(10);
   expect(generation.longDescription.length).toBeGreaterThan(50);
   expect(generation.tags.length).toBeGreaterThan(5);
-  expect(generation.socialText.length).toBeGreaterThan(20);
+
+  // ✅ Valida conteúdo dos 4 canais sociais
+  expect(generation.socialInstagram.length).toBeGreaterThan(20);
+  expect(generation.socialTikTok.length).toBeGreaterThan(20);
+  expect(generation.socialFacebook.length).toBeGreaterThan(20);
+  expect(generation.socialPinterest.length).toBeGreaterThan(20);
 }

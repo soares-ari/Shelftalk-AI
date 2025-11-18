@@ -1,19 +1,17 @@
 // backend/src/config/multer.config.ts
 
+import { BadRequestException } from '@nestjs/common';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 /**
  * Configuração do Multer para upload de imagens
  */
 export const multerConfig = {
   storage: diskStorage({
-    // Destino dos arquivos
     destination: './uploads/products',
-
-    // Nome do arquivo (UUID + extensão original)
     filename: (
       req: Request,
       file: Express.Multer.File,
@@ -24,7 +22,6 @@ export const multerConfig = {
     },
   }),
 
-  // Filtro de arquivos (apenas imagens)
   fileFilter: (
     req: Request,
     file: Express.Multer.File,
@@ -41,10 +38,15 @@ export const multerConfig = {
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Tipo de arquivo inválido. Use apenas imagens.'), false);
+      cb(
+        new BadRequestException(
+          'Tipo de arquivo inválido. Use apenas imagens (JPEG, PNG, WEBP, GIF).',
+        ),
+        false,
+      );
     }
   },
-  // Limite de tamanho (5MB)
+
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB
   },
