@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { BackButton } from "@/components/layout/back-button";
 import { ProductView } from "@/components/products/product-view";
 import type { Product } from "@/types/product";
 
@@ -11,9 +12,7 @@ type Props = {
 };
 
 export default function ProductPage({ params }: Props) {
-
   const { id } = use(params);
-
   const router = useRouter();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -56,6 +55,8 @@ export default function ProductPage({ params }: Props) {
 
   return (
     <DashboardShell>
+      <BackButton href="/dashboard" label="Voltar para Dashboard" />
+
       {loading && (
         <p className="text-slate-400">Carregando produto...</p>
       )}

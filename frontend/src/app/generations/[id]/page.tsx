@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { BackButton } from "@/components/layout/back-button";
 import { GenerationTabs } from "@/components/generations/generation-tabs";
 
 async function getGeneration(id: string) {
@@ -9,7 +10,6 @@ async function getGeneration(id: string) {
 
   if (!token) redirect("/login");
 
-  // Usar proxy interno em vez de chamar backend direto
   const res = await fetch(`http://localhost:3000/api/generations/${id}`, {
     method: "GET",
     headers: {
@@ -32,6 +32,7 @@ export default async function GenerationPage(
 
   return (
     <DashboardShell>
+      <BackButton label="Voltar" />
       <h1 className="text-3xl font-semibold mb-8">Conteúdo Gerado</h1>
       <GenerationTabs data={generation} />
     </DashboardShell>
