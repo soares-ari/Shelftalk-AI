@@ -1,10 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { GenerationsList } from "@/components/generations/generations-list";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { GenerationsList } from "@/components/generations/generations-list";
 
 type Props = {
   product: {
@@ -46,15 +49,47 @@ export function ProductView({ product }: Props) {
     }
   }
 
+  async function handleDelete() {
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        toast.error("Erro ao deletar produto");
+        return;
+      }
+
+      toast.success("Produto deletado com sucesso!");
+      router.push("/dashboard");
+    } catch (err) {
+      toast.error("Erro inesperado ao deletar produto");
+      console.error("Delete error:", err);
+    }
+  }
+
   return (
     <div className="space-y-8">
       {/* Seção do Produto */}
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-semibold">{product.name}</h1>
-          <p className="text-slate-400 mt-1">
-            {product.description ?? "Sem descrição"}
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold">{product.name}</h1>
+            <p className="text-slate-400 mt-1">
+              {product.description ?? "Sem descrição"}
+            </p>
+          </div>
+
+          <ConfirmDialog
+            title="Deletar Produto"
+            description={`Tem certeza que deseja deletar "${product.name}"? Esta ação não pode ser desfeita e todas as gerações vinculadas serão perdidas.`}
+            confirmLabel="Deletar"
+            onConfirm={handleDelete}
+          >
+            <button className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-950/20 rounded-md transition-colors">
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </ConfirmDialog>
         </div>
 
         <div className="rounded-lg overflow-hidden border border-slate-800">

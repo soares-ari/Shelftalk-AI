@@ -1,16 +1,12 @@
-// src/app/api/products/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { API_BASE_URL } from "@/lib/config";
 
 export async function GET(
-  _req: NextRequest,
-  args: { params: Promise<{ id: string }> }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // NEXT 16 → params é uma PROMISE
-    const { id } = await args.params;
-
     const cookieStore = await cookies();
     const token = cookieStore.get("accessToken")?.value;
 
@@ -21,7 +17,9 @@ export async function GET(
       );
     }
 
-    const serverRes = await fetch(`${API_BASE_URL}/products/${id}`, {
+    const { id } = await context.params;
+
+    const res = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -29,13 +27,57 @@ export async function GET(
       cache: "no-store",
     });
 
-    const data = await serverRes.json();
+    if (!res.ok) {
+      const error = await res.json();
+      return NextResponse.json(error, { status: res.status });
+    }
 
-    return NextResponse.json(data, { status: serverRes.status });
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (err) {
-    console.error("Erro em GET /api/products/[id]:", err);
+    console.error("Error fetching product:", err);
     return NextResponse.json(
       { message: "Erro ao buscar produto." },
+      { status: 500 }
+    );
+  }
+}
+
+// NOVO: DELETE
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { message: "Não autenticado." },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await context.params;
+
+    const res = await fetch(`${API_BASE_URL}/products/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      return NextResponse.json(error, { status: res.status });
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    console.error("Error deleting product:", err);
+    return NextResponse.json(
+      { message: "Erro ao deletar produto." },
       { status: 500 }
     );
   }
