@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import type { Generation } from "@/types/generation";
 
@@ -19,9 +20,19 @@ export function GenerationTabs({ data }: { data: Generation }) {
 
   const value = data?.[active] ?? "";
 
-  function copyToClipboard() {
-    if (!value) return;
-    navigator.clipboard.writeText(value);
+  async function copyToClipboard() {
+    if (!value) {
+      toast.error("Nenhum conteúdo disponível para copiar");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success("Conteúdo copiado para a área de transferência!");
+    } catch (err) {
+      toast.error("Erro ao copiar conteúdo");
+      console.error("Clipboard error:", err);
+    }
   }
 
   return (
@@ -33,7 +44,7 @@ export function GenerationTabs({ data }: { data: Generation }) {
             key={tab.key}
             onClick={() => setActive(tab.key)}
             className={[
-              "px-4 py-2 rounded-md whitespace-nowrap text-sm",
+              "px-4 py-2 rounded-md whitespace-nowrap text-sm transition-colors",
               active === tab.key
                 ? "bg-emerald-500 text-black font-semibold"
                 : "bg-slate-800 text-slate-300 hover:bg-slate-700",
@@ -50,7 +61,9 @@ export function GenerationTabs({ data }: { data: Generation }) {
           {value || "Nenhum conteúdo disponível."}
         </pre>
 
-        <Button onClick={copyToClipboard}>Copiar</Button>
+        <Button onClick={copyToClipboard} disabled={!value}>
+          Copiar
+        </Button>
       </div>
     </div>
   );
