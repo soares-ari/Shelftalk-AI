@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 type ProductData = {
   id: string;
@@ -47,7 +47,7 @@ export function ProductEditForm({ product, onSuccess, onCancel }: Props) {
         return;
       }
 
-      const data = await res.json() as ProductData;
+      const data = (await res.json()) as ProductData;
       toast.success("Produto atualizado com sucesso!");
       onSuccess(data);
     } catch (err) {
@@ -90,36 +90,12 @@ export function ProductEditForm({ product, onSuccess, onCancel }: Props) {
       {/* Upload de Imagem */}
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">
-          Nova Imagem (opcional)
+          Imagem do Produto
         </label>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-md cursor-pointer hover:bg-slate-700 transition-colors">
-            <Upload className="w-4 h-4" />
-            <span className="text-sm">
-              {image ? image.name : "Escolher arquivo"}
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImage(e.target.files?.[0] ?? null)}
-              className="hidden"
-            />
-          </label>
-          {image && (
-            <button
-              type="button"
-              onClick={() => setImage(null)}
-              className="p-2 text-slate-400 hover:text-red-400 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-        {image && (
-          <p className="text-xs text-slate-500 mt-1">
-            Nova imagem será enviada ao salvar
-          </p>
-        )}
+        <ImageUpload
+          onImageSelect={setImage}
+          currentImageUrl={product.imageUrl}
+        />
       </div>
 
       {/* Botões */}

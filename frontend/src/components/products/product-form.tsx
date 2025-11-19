@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { ErrorBox } from "@/components/feedback/error-box";
-import { useRouter } from "next/navigation";
 
 export function ProductForm() {
   const router = useRouter();
@@ -42,6 +44,7 @@ export function ProductForm() {
         return;
       }
 
+      toast.success("Produto criado com sucesso!");
       router.push("/dashboard");
     } catch (err) {
       setError("Erro inesperado ao criar produto.");
@@ -54,8 +57,8 @@ export function ProductForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Nome */}
       <div className="space-y-2">
-        <label htmlFor="name" className="text-sm font-medium">
-          Nome do Produto
+        <label htmlFor="name" className="text-sm font-medium text-slate-300">
+          Nome do Produto *
         </label>
         <Input
           id="name"
@@ -69,12 +72,12 @@ export function ProductForm() {
 
       {/* Descrição */}
       <div className="space-y-2">
-        <label htmlFor="description" className="text-sm font-medium">
+        <label htmlFor="description" className="text-sm font-medium text-slate-300">
           Descrição
         </label>
         <textarea
           id="description"
-          className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           rows={4}
           value={description}
           placeholder="Descrição curta do produto"
@@ -82,25 +85,18 @@ export function ProductForm() {
         />
       </div>
 
-      {/* Upload */}
+      {/* Upload de Imagem */}
       <div className="space-y-2">
-        <label htmlFor="image" className="text-sm font-medium">
+        <label className="text-sm font-medium text-slate-300">
           Imagem do Produto
         </label>
-
-        <input
-          className="block text-sm"
-          id="image"
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
+        <ImageUpload onImageSelect={setFile} />
       </div>
 
       <ErrorBox message={error ?? undefined} />
 
-      <Button type="submit" loading={loading}>
-        Criar Produto
+      <Button type="submit" disabled={loading}>
+        {loading ? "Criando..." : "Criar Produto"}
       </Button>
     </form>
   );
