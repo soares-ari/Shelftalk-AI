@@ -4,22 +4,27 @@ import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ProductEditForm } from "./product-edit-form";
 import { GenerationsList } from "@/components/generations/generations-list";
 
-type Props = {
-  product: {
-    id: string;
-    name: string;
-    description: string | null;
-    imageUrl: string | null;
-  };
+type ProductData = {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
 };
 
-export function ProductView({ product }: Props) {
+type Props = {
+  product: ProductData;
+};
+
+export function ProductView({ product: initialProduct }: Props) {
   const router = useRouter();
+  const [product, setProduct] = useState(initialProduct);
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +73,26 @@ export function ProductView({ product }: Props) {
     }
   }
 
+  function handleEditSuccess(updatedProduct: ProductData) {
+    setProduct(updatedProduct);
+    setIsEditing(false);
+  }
+
+  if (isEditing) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold">Editar Produto</h2>
+        <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
+          <ProductEditForm
+            product={product}
+            onSuccess={handleEditSuccess}
+            onCancel={() => setIsEditing(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Seção do Produto */}
@@ -80,16 +105,24 @@ export function ProductView({ product }: Props) {
             </p>
           </div>
 
-          <ConfirmDialog
-            title="Deletar Produto"
-            description={`Tem certeza que deseja deletar "${product.name}"? Esta ação não pode ser desfeita e todas as gerações vinculadas serão perdidas.`}
-            confirmLabel="Deletar"
-            onConfirm={handleDelete}
-          >
-            <button className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-950/20 rounded-md transition-colors">
-              <Trash2 className="w-5 h-5" />
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-2 text-slate-400 hover:text-emerald-400 hover:bg-emerald-950/20 rounded-md transition-colors"
+            >
+              <Edit2 className="w-5 h-5" />
             </button>
-          </ConfirmDialog>
+            <ConfirmDialog
+              title="Deletar Produto"
+              description={`Tem certeza que deseja deletar "${product.name}"? Esta ação não pode ser desfeita e todas as gerações vinculadas serão perdidas.`}
+              confirmLabel="Deletar"
+              onConfirm={handleDelete}
+            >
+              <button className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-950/20 rounded-md transition-colors">
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </ConfirmDialog>
+          </div>
         </div>
 
         <div className="rounded-lg overflow-hidden border border-slate-800">
