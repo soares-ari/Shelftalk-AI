@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProductEditForm } from "./product-edit-form";
 import { GenerationsList } from "@/components/generations/generations-list";
+import { GenerationLoading } from "../ui/generation-loading";
 
 type ProductData = {
   id: string;
@@ -28,8 +29,11 @@ export function ProductView({ product: initialProduct }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isGenerating, setIsGenerating] = useState(false);
+
   async function handleGenerate() {
     setLoading(true);
+    setIsGenerating(true);
     setError(null);
 
     try {
@@ -51,6 +55,7 @@ export function ProductView({ product: initialProduct }: Props) {
       setError("Erro inesperado ao gerar conteúdo.");
     } finally {
       setLoading(false);
+      setIsGenerating(false);
     }
   }
 
@@ -94,6 +99,7 @@ export function ProductView({ product: initialProduct }: Props) {
   }
 
   return (
+  <>  
     <div className="space-y-8">
       {/* Seção do Produto */}
       <div className="space-y-6">
@@ -158,5 +164,8 @@ export function ProductView({ product: initialProduct }: Props) {
       {/* Lista de Gerações */}
       <GenerationsList productId={product.id} />
     </div>
+    <GenerationLoading isOpen={isGenerating} />
+  </>
   );
+
 }

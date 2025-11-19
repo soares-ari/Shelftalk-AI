@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { BackButton } from "@/components/layout/back-button";
 import { ProductView } from "@/components/products/product-view";
+import { ProductViewSkeleton } from "@/components/ui/skeleton";
 import type { Product } from "@/types/product";
 
 type Props = { 
@@ -57,9 +58,7 @@ export default function ProductPage({ params }: Props) {
     <DashboardShell>
       <BackButton href="/dashboard" label="Voltar para Dashboard" />
 
-      {loading && (
-        <p className="text-slate-400">Carregando produto...</p>
-      )}
+      {loading && <ProductViewSkeleton/>}
 
       {error && (
         <p className="text-red-400 bg-red-950/40 border border-red-700 rounded-md px-3 py-2">
