@@ -9,8 +9,12 @@ async function getGeneration(id: string) {
   const token = cookieStore.get("accessToken")?.value;
 
   if (!token) redirect("/login");
+  
+  const baseUrl = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : 'http://localhost:3000';
 
-  const res = await fetch(`http://localhost:3000/api/generations/${id}`, {
+  const res = await fetch(`${baseUrl}/api/generations/${id}`, {
     method: "GET",
     headers: {
       Cookie: `accessToken=${token}`,
