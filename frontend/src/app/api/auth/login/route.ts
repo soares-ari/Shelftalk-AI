@@ -23,8 +23,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Aqui assumo um formato típico:
-    // { accessToken: string, refreshToken?: string, user?: {...} }
     const accessToken = data.accessToken;
     const refreshToken = data.refreshToken;
 

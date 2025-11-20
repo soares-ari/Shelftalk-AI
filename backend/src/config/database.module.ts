@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 
-// ✅ Importação explícita das entities
 import { User } from '../users/user.entity';
 import { Product } from '../products/product.entity';
 import { Generation } from '../generations/generation.entity'; // 🔥 ADICIONADO
@@ -52,8 +51,7 @@ interface PostgresConfig {
           database: db.db,
 
           /**
-           * ✅ ENTITIES EXPLÍCITAS
-           * 🔥 Generation adicionada aqui
+           * ENTITIES EXPLÍCITAS
            * Adicione novas entities conforme criar.
            */
           entities: [User, Product, Generation],
@@ -65,7 +63,7 @@ interface PostgresConfig {
           synchronize: true,
 
           /**
-           * 📝 Logs SQL habilitados para debug.
+           * Logs SQL habilitados para debug.
            * Desative em produção.
            */
           logging: true,

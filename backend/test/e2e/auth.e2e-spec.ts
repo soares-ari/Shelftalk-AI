@@ -2,12 +2,11 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest'; // 🔥 Mudança 1: sem asterisco
-import type { Server } from 'http'; // 🔥 Mudança 2: import do tipo Server
+import request from 'supertest';
+import type { Server } from 'http';
 import { AppModule } from '../../src/app.module';
 import { generateTestEmail } from '../helpers/test-helpers';
 
-// 🔥 Mudança 3: Interfaces para responses
 interface RegisterResponse {
   id: string;
   email: string;
@@ -52,7 +51,7 @@ describe('AuthController (E2E)', () => {
     it('deve registrar um novo usuário com sucesso', async () => {
       const email = generateTestEmail();
 
-      const response = await request(app.getHttpServer() as Server) // 🔥 as Server
+      const response = await request(app.getHttpServer() as Server)
         .post('/auth/register')
         .send({
           email,
@@ -60,7 +59,7 @@ describe('AuthController (E2E)', () => {
         })
         .expect(201);
 
-      const body = response.body as RegisterResponse; // 🔥 type assertion
+      const body = response.body as RegisterResponse;
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('email');

@@ -17,15 +17,12 @@ export async function POST(req: NextRequest) {
     const data = await nestRes.json();
 
     if (!nestRes.ok) {
-      // Backend já devolveu uma mensagem de erro
       return NextResponse.json(
         { message: data.message ?? 'Erro ao registrar.' },
         { status: nestRes.status },
       );
     }
 
-    // Aqui assumo que o backend PODE já devolver tokens ao registrar.
-    // Se ele só devolver o usuário, tudo bem, não quebra nada.
     const accessToken = data.accessToken;
     const refreshToken = data.refreshToken;
 

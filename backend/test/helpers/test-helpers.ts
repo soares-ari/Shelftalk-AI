@@ -23,7 +23,7 @@ export interface TestProduct {
   id: string;
   name: string;
   description: string | null;
-  imageUrl?: string | null; // ✅ ADICIONADO
+  imageUrl?: string | null;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
@@ -31,17 +31,16 @@ export interface TestProduct {
 
 /**
  * Interface para representar uma geração de teste
- * ✅ ATUALIZADA para refletir schema atual com 4 canais sociais
  */
 export interface TestGeneration {
   id: string;
   title: string;
   longDescription: string;
   tags: string;
-  socialInstagram: string; // ✅ ADICIONADO
-  socialTikTok: string; // ✅ ADICIONADO
-  socialFacebook: string; // ✅ ADICIONADO
-  socialPinterest: string; // ✅ ADICIONADO
+  socialInstagram: string;
+  socialTikTok: string;
+  socialFacebook: string;
+  socialPinterest: string;
   createdAt: string;
 }
 
@@ -128,14 +127,14 @@ export async function createAuthenticatedUser(
 }
 
 /**
- * ✅ ATUALIZADO: Cria um produto de teste (com ou sem imagem)
+ * Cria um produto de teste (com ou sem imagem)
  */
 export async function createTestProduct(
   app: INestApplication,
   token: string,
   name?: string,
   description?: string,
-  withImage: boolean = false, // ✅ NOVO parâmetro
+  withImage: boolean = false,
 ): Promise<TestProduct> {
   const productName = name || `Produto Teste ${Date.now()}`;
   const productDescription = description || 'Descrição de teste para validação';
@@ -188,7 +187,7 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
- * ✅ ATUALIZADO: Valida estrutura de uma geração completa
+ * Valida estrutura de uma geração completa
  */
 export function expectValidGeneration(generation: TestGeneration): void {
   expect(generation).toBeDefined();
@@ -197,7 +196,7 @@ export function expectValidGeneration(generation: TestGeneration): void {
   expect(generation.longDescription).toBeDefined();
   expect(generation.tags).toBeDefined();
 
-  // ✅ Valida os 4 campos sociais
+  // Valida os 4 campos sociais
   expect(generation.socialInstagram).toBeDefined();
   expect(generation.socialTikTok).toBeDefined();
   expect(generation.socialFacebook).toBeDefined();
@@ -211,7 +210,7 @@ export function expectValidGeneration(generation: TestGeneration): void {
   expect(generation.longDescription.length).toBeGreaterThan(50);
   expect(generation.tags.length).toBeGreaterThan(5);
 
-  // ✅ Valida conteúdo dos 4 canais sociais
+  // Valida conteúdo dos 4 canais sociais
   expect(generation.socialInstagram.length).toBeGreaterThan(20);
   expect(generation.socialTikTok.length).toBeGreaterThan(20);
   expect(generation.socialFacebook.length).toBeGreaterThan(20);

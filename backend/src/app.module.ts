@@ -9,8 +9,6 @@ import { AiModule } from './ai/ai.module';
 import { GenerationsModule } from './generations/generations.module';
 import configuration from './config/configuration';
 
-// 🔥 REMOVIDO: OpenAIModule (não é mais necessário com LangChain)
-
 @Module({
   imports: [
     ConfigModule.forRoot({

@@ -1,7 +1,7 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService, RegisterResult, LoginResult } from './auth.service';
-import { RegisterDto } from './dto/register.dto'; // 🔥 Import DTO
-import { LoginDto } from './dto/login.dto'; // 🔥 Import DTO
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 /**
  * Controller responsável por registro e login.
@@ -12,7 +12,7 @@ export class AuthController {
 
   /**
    * Rota de registro
-   * 🔥 MUDANÇA: Usar RegisterDto em vez de objeto genérico
+   *
    */
   @Post('register')
   async register(@Body() dto: RegisterDto): Promise<RegisterResult> {
@@ -21,7 +21,7 @@ export class AuthController {
 
   /**
    * Rota de login
-   * 🔥 MUDANÇA: Usar LoginDto + HttpCode(200)
+   *
    */
   @Post('login')
   @HttpCode(HttpStatus.OK)

@@ -174,7 +174,7 @@ describe('GenerationsController (E2E)', () => {
 
       await request(app.getHttpServer() as Server)
         .post('/generations/generate-all')
-        .set('Authorization', `Bearer ${user2.token}`) // CORRIGIDO: user2.token
+        .set('Authorization', `Bearer ${user2.token}`)
         .send({ productId: product.id })
         .expect(404);
     });

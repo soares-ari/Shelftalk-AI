@@ -43,7 +43,6 @@ export async function GET(
   }
 }
 
-// NOVO: PATCH
 export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }

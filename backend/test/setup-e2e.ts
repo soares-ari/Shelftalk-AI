@@ -1,6 +1,5 @@
 // test/setup-e2e.ts
 
-// 🔥 NOVO: Carregar .env antes de tudo
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -34,7 +33,7 @@ process.env.POSTGRES_HOST = process.env.POSTGRES_HOST || 'localhost';
 process.env.POSTGRES_PORT = process.env.POSTGRES_PORT || '5432';
 process.env.POSTGRES_USER = process.env.POSTGRES_USER || 'postgres';
 process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'postgres';
-process.env.POSTGRES_DB = 'shelftalk'; // 🔥 Usar banco dev
+process.env.POSTGRES_DB = 'shelftalk'; //  Usar banco dev
 process.env.REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
 

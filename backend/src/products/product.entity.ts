@@ -34,8 +34,6 @@ export class Product {
   /**
    * Pequena descrição fornecida pelo usuário.
    * Isso complementa o prompt para gerar textos melhores.
-   *
-   * ✅ CORREÇÃO: Tipo explícito 'text' para evitar ambiguidade
    */
   @Column({ type: 'text', nullable: true })
   description: string | null;
