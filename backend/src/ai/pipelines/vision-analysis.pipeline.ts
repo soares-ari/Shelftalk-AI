@@ -45,7 +45,7 @@ export class VisionAnalysisPipeline {
    */
   private readonly visionModel = new ChatOpenAI({
     modelName: 'gpt-4o-mini',
-    temperature: 0.3, // Baixa temperatura para análise objetiva
+    temperature: 0.3, // ← BAIXA = análise objetiva
     apiKey: process.env.OPENAI_API_KEY,
   });
 
@@ -59,12 +59,12 @@ export class VisionAnalysisPipeline {
     this.logger.debug(`Analisando imagem: ${imagePath}`);
 
     try {
-      // Converte imagem para base64
+      // 1. LER IMAGEM DO DISCO
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString('base64');
       const mimeType = this.getMimeType(imagePath);
 
-      // Prompt estruturado para análise de produto
+      // 2. PROMPT ESTRUTURADO PARA ANÁLISE
       const analysisPrompt = `Você é um especialista em análise de produtos para e-commerce.
 Analise esta imagem de produto e retorne APENAS um JSON válido (sem markdown, sem explicações) com a seguinte estrutura:
 
@@ -79,7 +79,7 @@ Analise esta imagem de produto e retorne APENAS um JSON válido (sem markdown, s
 
 Seja preciso e objetivo. Use português brasileiro.`;
 
-      // Chamada ao modelo com visão
+      // 3. CHAMADA MULTIMODAL (texto + imagem)
       const response = await this.visionModel.invoke([
         {
           role: 'user',
@@ -98,15 +98,16 @@ Seja preciso e objetivo. Use português brasileiro.`;
         },
       ]);
 
-      // 🔥 Parse da resposta com tipagem correta
+      // 4. PARSE DA RESPOSTA
       const responseText = this.extractTextFromResponse(response);
 
-      // Remove markdown se houver
+      // 5. LIMPEZA (remove markdown se houver)
       const cleanedText = responseText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
 
+      // 6. PARSE JSON
       const analysis = JSON.parse(cleanedText) as VisionAnalysisResult;
 
       this.logger.debug(
@@ -115,14 +116,14 @@ Seja preciso e objetivo. Use português brasileiro.`;
 
       return analysis;
     } catch (error) {
-      // 🔥 Tratamento de erro com tipagem correta
+      // TRATAMENTO DE ERRO
       const errorMessage =
         error instanceof Error ? error.message : 'Erro desconhecido';
       const errorStack = error instanceof Error ? error.stack : undefined;
 
       this.logger.error(`Erro ao analisar imagem: ${errorMessage}`, errorStack);
 
-      // Fallback: retorna análise vazia se falhar
+      // FALLBACK: Retorna análise vazia se falhar
       return {
         category: 'produto',
         colors: [],
@@ -134,10 +135,7 @@ Seja preciso e objetivo. Use português brasileiro.`;
     }
   }
 
-  /**
-  /**
-   * Extrai texto da resposta do LangChain com tipagem segura
-   */
+  // HELPER: Extrai texto da resposta com tipagem segura
   private extractTextFromResponse(response: AIMessage): string {
     const content = response.content;
 
@@ -174,9 +172,7 @@ Seja preciso e objetivo. Use português brasileiro.`;
     return JSON.stringify(content);
   }
 
-  /**
-   * Determina o MIME type baseado na extensão do arquivo
-   */
+  // HELPER: Determina MIME type
   private getMimeType(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase();
     const mimeTypes: Record<string, string> = {

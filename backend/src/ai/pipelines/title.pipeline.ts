@@ -16,18 +16,20 @@ export class TitlePipeline {
 
   private readonly model = new ChatOpenAI({
     modelName: 'gpt-4o-mini' satisfies string,
-    temperature: 0.5,
+    temperature: 0.5, // ← Baixa temperatura = mais preciso, menos criativo
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+  // Executa a pipeline
   async run(input: TitleInput): Promise<GenerationResult> {
     this.logger.debug(`Gerando título SEO para produto: ${input.name}`);
 
     const maxLength = input.maxLength ?? 80;
 
+    // PROMPT TEMPLATE usando LangChain
     const prompt = ChatPromptTemplate.fromMessages([
       [
-        'system',
+        'system', // ← Instrução do sistema (define comportamento)
         [
           'Você é especialista em títulos de produtos para e-commerce brasileiro.',
           'Gere UM título otimizado para SEO, claro e atrativo.',
@@ -36,7 +38,7 @@ export class TitlePipeline {
         ].join(' '),
       ],
       [
-        'human',
+        'human', // ← Input do usuário
         [
           'Nome do produto: {name}',
           'Descrição base (se houver): {description}',
@@ -45,18 +47,21 @@ export class TitlePipeline {
       ],
     ]);
 
+    // CHAIN = Prompt + Model (padrão LangChain)
     const chain = prompt.pipe(this.model);
 
+    // EXECUÇÃO
     const response = await chain.invoke({
       name: input.name,
       description: input.description ?? '',
       marketplace: input.marketplace ?? 'generic',
     });
 
+    // PARSE da resposta
     const text =
       typeof response === 'string' ? response : (response.content as string);
 
-    // Força remoção de quebras de linha, caso venham
+    // NORMALIZAÇÃO (remove quebras de linha)
     const normalized = text.replace(/\s+/g, ' ').trim();
 
     return {

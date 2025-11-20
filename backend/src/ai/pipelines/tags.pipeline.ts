@@ -16,18 +16,20 @@ export class TagsPipeline {
 
   private readonly model = new ChatOpenAI({
     modelName: 'gpt-4o-mini' satisfies string,
-    temperature: 0.6,
+    temperature: 0.6, // ← Moderada
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+  // Executa a pipeline
   async run(input: TagsInput): Promise<GenerationResult> {
     this.logger.debug(`Gerando tags para produto: ${input.name}`);
 
     const maxTags = input.maxTags ?? 10;
 
+    // PROMPT TEMPLATE usando LangChain
     const prompt = ChatPromptTemplate.fromMessages([
       [
-        'system',
+        'system', // ← Instrução do sistema (define comportamento)
         [
           'Gere uma lista de palavras-chave (tags) para e-commerce brasileiro.',
           'Responda APENAS com as tags separadas por vírgula.',
@@ -35,7 +37,7 @@ export class TagsPipeline {
         ].join(' '),
       ],
       [
-        'human',
+        'human', // ← Input do usuário
         [
           'Nome do produto: {name}',
           'Descrição base (se houver): {description}',
@@ -43,13 +45,16 @@ export class TagsPipeline {
       ],
     ]);
 
+    // CHAIN = Prompt + Model (padrão LangChain)
     const chain = prompt.pipe(this.model);
 
+    // EXECUÇÃO
     const response = await chain.invoke({
       name: input.name,
       description: input.description ?? '',
     });
 
+    // PARSE da resposta
     const text =
       typeof response === 'string' ? response : (response.content as string);
 

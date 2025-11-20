@@ -34,13 +34,7 @@ export class AiService {
     private readonly visionPipeline: VisionAnalysisPipeline,
   ) {}
 
-  // ========================================
-  // MÉTODO AUXILIAR PRIVADO
-  // ========================================
-
-  /**
-   * Enriquece descrição com análise visual se imageUrl estiver presente
-   */
+  // MÉTODO PRIVADO: Enriquece descrição com análise visual
   private async enrichWithVisionAnalysis(
     description: string | null | undefined,
     imageUrl: string | null | undefined,
@@ -51,17 +45,21 @@ export class AiService {
       try {
         const imagePath = path.join(process.cwd(), imageUrl);
         this.logger.debug(`Analisando imagem: ${imagePath}`);
-
+        // 1. ANALISA IMAGEM
         const visionAnalysis =
           await this.visionPipeline.analyzeImage(imagePath);
+
+        // 2. FORMATA EM TEXTO
         const visionContext =
           this.visionPipeline.formatAnalysisForPrompt(visionAnalysis);
 
+        // 3. ADICIONA AO CONTEXTO
         enrichedDescription = `${description || ''}\n\nAnálise visual:\n${visionContext}`;
         this.logger.debug('Contexto enriquecido com análise visual');
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Erro desconhecido';
+        // Continua sem visão se falhar
         this.logger.warn(
           `Falha ao analisar imagem, continuando sem visão: ${errorMessage}`,
         );
@@ -155,11 +153,12 @@ export class AiService {
   ): Promise<string> {
     this.logger.debug(`Gerando título para produto: ${name}`);
 
+    // 1. ENRIQUECE COM VISÃO (se tem imagem)
     const enrichedDescription = await this.enrichWithVisionAnalysis(
       description,
       imageUrl,
     );
-
+    // 2. CHAMA PIPELINE DE TÍTULO
     const result = await this.titlePipeline.run({
       name,
       description: enrichedDescription,

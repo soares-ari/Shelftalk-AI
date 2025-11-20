@@ -17,10 +17,11 @@ export class SocialPostPipeline {
 
   private readonly model = new ChatOpenAI({
     modelName: 'gpt-4o-mini' satisfies string,
-    temperature: 0.9,
+    temperature: 0.9, // ← ALTA criatividade para social
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+  // Executa a pipeline
   async run(input: SocialPostInput): Promise<GenerationResult> {
     this.logger.debug(
       `Gerando post social para produto: ${input.name} no canal ${input.channel}`,
@@ -28,7 +29,7 @@ export class SocialPostPipeline {
 
     const tone = input.tone ?? 'neutro';
 
-    // Adapta estilo por canal
+    // ADAPTA ESTILO POR CANAL
     let styleGuide = '';
     switch (input.channel) {
       case 'instagram':
@@ -51,9 +52,10 @@ export class SocialPostPipeline {
         styleGuide = 'Tom neutro e profissional.';
     }
 
+    // PROMPT TEMPLATE usando LangChain
     const prompt = ChatPromptTemplate.fromMessages([
       [
-        'system',
+        'system', // ← Instrução do sistema (define comportamento)
         [
           'Você é um social media especializado em criar legendas para e-commerce em português do Brasil.',
           'Adapte o texto para o canal e público-alvo específico.',
@@ -63,7 +65,7 @@ export class SocialPostPipeline {
         ].join(' '),
       ],
       [
-        'human',
+        'human', // ← Input do usuário
         [
           'Canal: {channel}',
           'Nome do produto: {name}',
@@ -74,8 +76,10 @@ export class SocialPostPipeline {
       ],
     ]);
 
+    // CHAIN = Prompt + Model (padrão LangChain)
     const chain = prompt.pipe(this.model);
 
+    // EXECUÇÃO
     const response = await chain.invoke({
       channel: input.channel,
       name: input.name,
@@ -83,6 +87,7 @@ export class SocialPostPipeline {
       tone,
     });
 
+    // PARSE da resposta
     const text =
       typeof response === 'string' ? response : (response.content as string);
 

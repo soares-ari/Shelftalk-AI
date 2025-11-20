@@ -15,28 +15,20 @@ import { BaseProductInput, GenerationResult } from './ai-pipeline.types';
 export class LongDescriptionPipeline {
   private readonly logger = new Logger(LongDescriptionPipeline.name);
 
-  /**
-   * O modelo do LangChain / OpenAI.
-   * Aqui usamos um construtor direto, mas você pode
-   * ajustar o modelo para o mesmo que já usou antes.
-   */
   private readonly model = new ChatOpenAI({
-    // Ajuste para o modelo que estiver usando no projeto
-    // (por ex: 'gpt-4o-mini', 'gpt-4.1-mini', etc.).
     modelName: 'gpt-4o-mini' satisfies string,
-    temperature: 0.7,
+    temperature: 0.7, // ← Mais criativa que title
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  /**
-   * Executa a pipeline para gerar uma descrição longa.
-   */
+  // Executa a pipeline
   async run(input: BaseProductInput): Promise<GenerationResult> {
     this.logger.debug(`Gerando descrição longa para produto: ${input.name}`);
 
+    // PROMPT TEMPLATE usando LangChain
     const prompt = ChatPromptTemplate.fromMessages([
       [
-        'system',
+        'system', // ← Instrução do sistema (define comportamento)
         [
           'Você é um copywriter especializado em e-commerce.',
           'Gere uma descrição detalhada, envolvente e clara para o produto informado.',
@@ -45,7 +37,7 @@ export class LongDescriptionPipeline {
         ].join(' '),
       ],
       [
-        'human',
+        'human', // ← Input do usuário
         [
           'Nome do produto: {name}',
           'Descrição base (se houver): {description}',
@@ -56,14 +48,16 @@ export class LongDescriptionPipeline {
       ],
     ]);
 
+    // CHAIN = Prompt + Model (padrão LangChain)
     const chain = prompt.pipe(this.model);
 
+    // EXECUÇÃO
     const response = await chain.invoke({
       name: input.name,
       description: input.description ?? '',
     });
 
-    // Em versões atuais do LangChain, o retorno é um "AIMessage" com .content
+    // PARSE da resposta
     const text =
       typeof response === 'string' ? response : (response.content as string);
 
