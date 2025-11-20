@@ -102,7 +102,7 @@ ShelfTalk AI foi desenvolvido como projeto técnico para demonstrar expertise em
 ### Backend
 - **Framework:** NestJS 10 (Node.js + TypeScript)
 - **ORM:** TypeORM 0.3 (Active Record)
-- **Banco de Dados:** PostgreSQL 16
+- **Banco de Dados:** PostgreSQL 15
 - **Autenticação:** JWT (Passport + @nestjs/jwt)
 - **Validação:** class-validator + class-transformer
 - **Upload:** Multer (diskStorage)
@@ -122,7 +122,9 @@ ShelfTalk AI foi desenvolvido como projeto técnico para demonstrar expertise em
 
 ### DevOps
 - **Containerização:** Docker + Docker Compose
-- **CI/CD:** (Pronto para GitHub Actions)
+- **PostgreSQL:** 15 (containerizado)
+- **Redis:** 7 (preparado para cache futuro)
+- **CI/CD:** Pronto para GitHub Actions
 - **Monitoramento:** Logs estruturados (NestJS Logger)
 
 ---
@@ -182,11 +184,18 @@ ShelfTalk AI foi desenvolvido como projeto técnico para demonstrar expertise em
 
 ### 1. Clone o Repositório
 ```bash
-git clone https://github.com/seu-usuario/shelftalk-ai.git
+git clone https://github.com/soares-ari/shelftalk-ai.git
 cd shelftalk-ai
 ```
 
 ### 2. Configure Variáveis de Ambiente
+
+**Infra** (`infra/.env`):
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=shelftalk
+```
 
 **Backend** (`backend/.env`):
 ```env
@@ -212,10 +221,16 @@ PORT=3001
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-### 3. Suba o Banco de Dados
+### 3. Suba os Serviços Docker
 ```bash
-docker-compose up -d
+docker-compose -f infra/docker-compose.yml up -d
 ```
+
+Isso irá iniciar:
+- **PostgreSQL 15** na porta 5432
+- **Redis 7** na porta 6379
+
+Aguarde ~10 segundos para o PostgreSQL inicializar completamente.
 
 ### 4. Instale Dependências
 
@@ -249,6 +264,84 @@ npm run dev
 
 ### 6. Acesse a Aplicação
 Abra [http://localhost:3000](http://localhost:3000) no navegador.
+
+### 7. Teste o Sistema
+
+1. **Registre um usuário:** Email + senha
+2. **Faça login:** Receba JWT token
+3. **Crie um produto:** Nome + descrição + imagem
+4. **Gere conteúdo:** Clique em "Gerar Conteúdo"
+5. **Visualize resultado:** 7 tipos de conteúdo em ~5 segundos
+
+---
+
+## 🐳 Docker
+
+### Serviços Disponíveis
+
+O projeto usa Docker Compose para orquestrar os serviços de infraestrutura:
+
+| Serviço | Imagem | Porta | Descrição |
+|---------|--------|-------|-----------|
+| PostgreSQL | postgres:15 | 5432 | Banco de dados principal |
+| Redis | redis:7 | 6379 | Cache (preparado para uso futuro) |
+
+### Comandos Úteis
+
+**Iniciar serviços:**
+```bash
+docker-compose -f infra/docker-compose.yml up -d
+```
+
+**Parar serviços:**
+```bash
+docker-compose -f infra/docker-compose.yml down
+```
+
+**Ver logs:**
+```bash
+docker-compose -f infra/docker-compose.yml logs -f postgres
+docker-compose -f infra/docker-compose.yml logs -f redis
+```
+
+**Resetar banco de dados:**
+```bash
+docker-compose -f infra/docker-compose.yml down -v  # Remove volumes
+docker-compose -f infra/docker-compose.yml up -d    # Recria
+```
+
+**Acessar PostgreSQL diretamente:**
+```bash
+docker exec -it shelftalk-postgres psql -U postgres -d shelftalk
+```
+
+### Troubleshooting Docker
+
+**Erro: "port 5432 already in use"**
+```bash
+# Verifique se já tem PostgreSQL rodando localmente
+sudo lsof -i :5432
+# Pare o PostgreSQL local ou mude a porta no infra/docker-compose.yml
+```
+
+**Erro: "database does not exist"**
+```bash
+# Recrie o container
+docker-compose -f infra/docker-compose.yml down -v
+docker-compose -f infra/docker-compose.yml up -d
+```
+
+### Volumes
+
+Os dados do PostgreSQL são persistidos no volume `postgres_data`, garantindo que os dados não sejam perdidos ao reiniciar os containers.
+
+### Nota sobre Redis
+
+O **Redis está configurado** mas não está sendo usado atualmente. Está preparado para futuras implementações de:
+- Cache de queries
+- Rate limiting
+- Session storage
+- Queue de jobs
 
 ---
 
@@ -320,7 +413,10 @@ shelftalk-ai/
 │   │       └── layout/        # Layout components
 │   └── package.json
 │
-├── docker-compose.yml
+├── infra/
+│   ├── docker-compose.yml     # Orquestração de serviços
+│   └── .env                   # Variáveis do Docker
+│
 └── README.md
 ```
 
