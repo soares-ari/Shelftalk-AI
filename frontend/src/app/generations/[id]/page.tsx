@@ -3,36 +3,45 @@ import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { BackButton } from "@/components/layout/back-button";
 import { GenerationTabs } from "@/components/generations/generation-tabs";
+import { API_BASE_URL } from "@/lib/config";
 
-async function getGeneration(id: string) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
+async function getGeneration(id: string, token: string) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/generations/${id}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
 
-  if (!token) redirect("/login");
-  
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : 'http://localhost:3000';
+    if (res.status === 404) return null;
+    if (!res.ok) return null;
 
-  const res = await fetch(`${baseUrl}/api/generations/${id}`, {
-    method: "GET",
-    headers: {
-      Cookie: `accessToken=${token}`,
-    },
-    cache: "no-store",
-  });
-
-  if (res.status === 404) redirect("/dashboard");
-  if (!res.ok) redirect("/login");
-
-  return res.json();
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching generation:", error);
+    return null;
+  }
 }
 
 export default async function GenerationPage(
   props: { params: Promise<{ id: string }> }
 ) {
   const { id } = await props.params;
-  const generation = await getGeneration(id);
+  
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  if (!token) {
+    redirect("/login");
+  }
+
+  const generation = await getGeneration(id, token);
+
+  if (!generation) {
+    redirect("/dashboard");
+  }
 
   return (
     <DashboardShell>
