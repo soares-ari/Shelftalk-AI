@@ -36,9 +36,10 @@ export class ProductsController {
     @Body() createProductDto: CreateProductDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    // URL completa para acesso via HTTP
+    const baseUrl =
+      process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`;
     const imageUrl = file
-      ? `http://localhost:${process.env.PORT || 3001}/uploads/products/${file.filename}`
+      ? `${baseUrl}/uploads/products/${file.filename}`
       : null;
 
     const product = await this.productsService.create({
@@ -95,7 +96,9 @@ export class ProductsController {
     };
 
     if (file) {
-      updateData.imageUrl = `http://localhost:${process.env.PORT || 3001}/uploads/products/${file.filename}`;
+      const baseUrl =
+        process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`;
+      updateData.imageUrl = `${baseUrl}/uploads/products/${file.filename}`;
     }
 
     return this.productsService.update(id, updateData);
